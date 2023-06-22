@@ -1,0 +1,16 @@
+spring:
+  application:
+    name: order-management
+  cloud:
+    nacos:
+      discovery:
+        enabled: true
+        server-addr: 47.115.201.152:8848
+        username: nacos
+        password: nacos
+        namespace: public
+      config:
+        context-path: /nacos
+        server-addr: 47.115.201.152:8848
+server:
+  port: 8080

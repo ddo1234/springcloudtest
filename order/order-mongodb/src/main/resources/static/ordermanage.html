@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/html">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <title>订单管理</title>
+    <link rel="stylesheet" href="./layui/css/layui.css">
+</head>
+<body>
+
+<fieldset class="layui-elem-field layui-field-title" style="margin-top: 20px;">
+    <legend>订单管理</legend>
+</fieldset>
+<!--面板-->
+<div class="layui-card">
+    <div class="layui-card-header"></div>
+    <div class="layui-card-body">
+        <label class="layui-form-label">订单编号</label>
+        <div class="layui-input-inline">
+            <input type="text" id="orderId" class="layui-input">
+        </div>
+        <button onclick="search();" class="layui-btn layui-btn-normal"><i class="layui-icon">&#xe615;</i></button>
+    </div>
+</div>
+
+<div style="padding: 20px;margin-bottom: 100px;">
+    <!--    面板-->
+    <div class="layui-col-md12">
+        <div class="layui-card">
+            <div class="layui-card-header">订单信息</div>
+            <div class="layui-card-body" id="order"></div>
+        </div>
+    </div>
+    <!-- 面板-->
+    <div class="layui-col-md12">
+        <div class="layui-card">
+            <div class="layui-card-header">物流信息</div>
+            <div class="layui-card-body">
+                <!--                时间线-->
+                <ul class="layui-timeline" id="logistics">
+
+                    <!--        <li class="layui-timeline-item">-->
+                    <!--            <i class="layui-icon layui-timeline-axis">&#xe63f;</i>-->
+                    <!--            <div class="layui-timeline-content layui-text">-->
+                    <!--                <div class="layui-timeline-title">过去</div>-->
+                    <!--            </div>-->
+                    <!--        </li>-->
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="layui0col-md12">
+        <!--面板-->
+        <div class="layui-col-md12">
+            <div class="layui-card">
+                <div class="layui-card-header">订单列表</div>
+                <div class="layui-card-body">
+                    <!--            数据表格-->
+                    <table id="orderList" lay-filter="orderTable"></table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!--头工具栏事件-->
+<script type="text/html" id="toolbarDemo">
+    <div class="layui-btn-container">
+    </div>
+</script>
+
+<!--行工具事件-->
+<script type="text/html" id="barDemo">
+    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+<!--    <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>-->
+</script>
+
+<script src="./layui/layui.js"></script>
+<script src="./js/jquery-3.6.4.min.js"></script>
+<script>
+    //搜索
+    function search() {
+        const localhost = "47.113.151.184"
+        //订单编号
+        var orderId = $("#orderId").val();
+        $.ajax({
+            // url:"/order/" + orderId,
+            // url:"client/" + orderId,
+            url: 'http://'+localhost+':8081/client/' + orderId,
+            // port:8081,
+            type:"GET",
+            dataType:"JSON",
+            //拼接处理返回结果
+            success:function (order) {
+                console.log(order);
+                if (order == null || order == undefined || order == "") {
+                    layui.layer.msg("订单不存在");
+                    return;
+                }
+
+                //处理订单信息
+
+                $("#order").append("订单编号:" + orderId + "(" + order["status"] + ") <hr/>")
+                    .append("发货人:" + order["shipper"] + "<br/>")
+                    .append("发货人地址:" + order["shipperAddress"] + "<br/>")
+                    .append("发货人电话:" + order["shipperPhone"] + "<br/>")
+                    .append("下单时间:" + order["orderTime"] + "<br/>")
+                    .append("发货时间:" + order["shipperTime"] + "<br/>")
+                    .append("发货人:" + order["shipper"] + "<hr/>")
+                    .append("收货人:" + order["receiver"] + "<br/>")
+                    .append("收货地址:" + order["receiverAddress"] + "<br/>")
+                    .append("收货电话:" + order["receiverPhone"] + "<br/>");
+                //获取物流信息
+                let logistics = order['logistics'];
+                //倒序循环
+                for (var i = logistics.length - 1; i >= 0; i--) {
+                    //处理物流信息
+                    $("#logistics").append('<li class="layui-timeline-item">' +
+                        '<i class="layui-icon layui-timeline-axis">&#xe63f;</i>' +
+                        '<div class="layui-timeline-content layui-text">' +
+                        '<h3 class="layui-timeline-title">' +
+                        '（' + logistics[i].operation + '）' +
+                        logistics[i].operationTime + '</h3>' +
+                        '<p>' + logistics[i].details + '</p>' +
+                        '<p>操作员:'+ logistics[i].operator + '&nbsp;' +
+                        '操作员电话:' + logistics[i].phone + '&nbsp;' +
+                        '操作地址:' + logistics[i].address + '</p></div></li>');
+
+                }
+            },
+            error: function (order) {
+                console.log(order);
+                if (order == null || order == undefined || order == "") {
+                    layui.layer.msg("订单不存在");
+                    return;
+                }
+            }
+        });
+    }
+
+    //数据表格
+    layui.use('table', function(){
+        var table = layui.table;
+        const localhost = "47.113.151.184"
+        //第一个实例
+        table.render({
+            elem: '#orderList',
+            // url: '/order/list', //数据接口
+            url: 'http://'+localhost+':8081/client/list',
+            // url: 'client/list',
+            // port: 8081,
+            page: true, //开启分页
+            toolbar: '#toolbarDemo',
+            cols: [[ //表头
+                {field: 'id', title: '订单编号', sort: true, fixed: 'left'},
+                {field: 'status', title: '订单状态'},
+                {field: 'orderTime', title: '下单时间', sort: true},
+                {field: 'shipper', title: '发货人'},
+                {field: 'shipperAddress', title: '发货地址'},
+                {field: 'shipperPhone', title: '发货人电话'},
+                {field: 'receiver', title: '收货人', edit:'text'},
+                {field: 'receiverAddress', title: '收货地址'},
+                {field: 'receiverPhone', title: '收货人电话'},
+                {fixed:'right',title: '操作',toolbar:'#barDemo'}  //编辑/删除
+            ]]
+        });
+
+
+        //工具条事件
+        table.on('tool(orderTable)', function(obj){ //注：tool 是工具条事件名，test 是 table 原始容器的属性 lay-filter="对应的值"
+            const localhost = "47.113.151.184"
+            var data = obj.data; //获得当前行数据
+            var layEvent = obj.event; //获得 lay-event 对应的值（也可以是表头的 event 参数对应的值）
+            var tr = obj.tr; //获得当前行 tr 的 DOM 对象（如果有的话）
+
+            if(layEvent === 'detail'){ //查看
+                //do somehing
+            } else if(layEvent === 'del'){ //删除
+                layer.confirm('真的删除行么', function(index){
+                    obj.del(); //删除对应行（tr）的DOM结构，并更新缓存
+                    layer.close(index);
+                    //向服务端发送删除指令
+                    $.ajax({
+                        // url:"/order/delete",
+                        // url:"/client/delete",
+                        url: 'http://'+localhost+':8081/client/delete/'+ data.id,
+                        // port:8081,
+                        type:"GET",
+                        // data:{"id":data.id},
+                        // data:JSON.stringify({id:data.id}),
+                        dataType:"text",
+                        success:function (result) {
+                            layui.layer.msg(result);
+                        }
+
+                    })
+                    return false;
+                });
+
+            } else if(layEvent === 'edit'){ //编辑
+                //do something
+
+                //同步更新缓存对应的值
+                obj.update({
+                    username: '123'
+                    ,title: 'xxx'
+                });
+            } else if(layEvent === 'LAYTABLE_TIPS'){
+                layer.alert('Hi，头部工具栏扩展的右侧图标。');
+            }
+        });
+
+    });
+
+</script>
+</body>
+</html>

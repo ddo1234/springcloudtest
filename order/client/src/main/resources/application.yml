@@ -1,0 +1,8 @@
+spring:
+  data:
+    mongodb:
+      #缩进不正确默认连接test
+      uri: mongodb://47.113.151.184:27017/order-demo
+feign:
+  hystrix:
+    enabled: true
